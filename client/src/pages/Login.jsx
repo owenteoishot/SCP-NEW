@@ -12,15 +12,17 @@ function Login() {
   };
 
   const handleSubmit = async e => {
-    e.preventDefault();
-    try {
-      const res = await api.post('/auth/login', form);
-      localStorage.setItem('token', res.data.token);
-      navigate('/dashboard');
-    } catch (err) {
-      setError(err.response?.data?.error || 'Login failed');
-    }
-  };
+  e.preventDefault();
+  try {
+    const res = await api.post('/auth/login', form);
+    localStorage.setItem('token', res.data.token);
+    localStorage.setItem('refreshToken', res.data.refreshToken); // ⬅️ Add this
+    navigate('/dashboard');
+  } catch (err) {
+    setError(err.response?.data?.error || 'Login failed');
+  }
+};
+
 
   return (
     <div>

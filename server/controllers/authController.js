@@ -1,51 +1,67 @@
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const pool = require('../db');
+const huntModel = require('../models/huntModel');
 
-const registerUser = async (req, res) => {
-  const { username, email, password } = req.body;
-
+const startHunt = async (req, res) => {
+  const userId = req.user.userId;
   try {
-    const existing = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (existing.rows.length > 0) {
-      return res.status(400).json({ error: 'Email already exists' });
+    const check = await huntModel.getActiveHunt(userId);
+
+    if (check.rows.length > 0) {
+      return res.status(200).json({ message: 'Hunt already in progress', hunt: check.rows[0] });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
-    await pool.query(
-      'INSERT INTO users (username, email, password) VALUES ($1, $2, $3)',
-      [username, email, hashedPassword]
-    );
-
-    res.status(201).json({ message: 'User registered successfully' });
-  } catch (err) {
-    console.error('Register error:', err.message);
-    res.status(500).json({ error: 'Server error' });
+    const result = await huntModel.createNewHunt(userId);
+    res.status(201).json({ message: 'New hunt started', hunt: result.rows[0] });
+  } catch {
+    res.status(500).json({ error: 'Could not start hunt' });
   }
 };
 
-const loginUser = async (req, res) => {
-  const { email, password } = req.body;
-
+const getHuntStatus = async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    const user = result.rows[0];
+    const result = await huntModel.getActiveHunt(req.user.userId);
 
-    if (!user) {
-      return res.status(400).json({ error: 'Invalid credentials' });
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'No active hunt' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ error: 'Invalid credentials' });
-    }
-
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token });
-  } catch (err) {
-    console.error('Login error:', err.message);
-    res.status(500).json({ error: 'Server error' });
+    res.json({ hunt: result.rows[0] });
+  } catch {
+    res.status(500).json({ error: 'Error fetching hunt status' });
   }
 };
 
-module.exports = { registerUser, loginUser };
+const completeLocation = async (req, res) => {
+  const userId = req.user.userId;
+  const { stepCompleted } = req.body;
+
+  try {
+    const hunt = await huntModel.getActiveHunt(userId);
+    if (hunt.rows.length === 0) return res.status(404).json({ error: 'No active hunt' });
+
+    const current = hunt.rows[0];
+    if (stepCompleted !== current.current_step) return res.status(400).json({ error: 'Step mismatch' });
+
+    const newStep = current.current_step + 1;
+
+    if (newStep > 5) {
+      await huntModel.completeHunt(current.id);
+      return res.json({ message: 'Hunt completed!' });
+    } else {
+      await huntModel.updateStep(current.id, newStep);
+      return res.json({ message: `Moved to step ${newStep}` });
+    }
+  } catch {
+    res.status(500).json({ error: 'Failed to update hunt step' });
+  }
+};
+
+const getHuntHistory = async (req, res) => {
+  try {
+    const result = await huntModel.getHuntHistory(req.user.userId);
+    res.json({ history: result.rows });
+  } catch {
+    res.status(500).json({ error: 'Failed to fetch hunt history' });
+  }
+};
+
+module.exports = { startHunt, getHuntStatus, completeLocation, getHuntHistory };
