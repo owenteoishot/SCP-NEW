@@ -1,10 +1,10 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: '/api', // ✅ Relative path for Vite proxy
 });
 
-// Request Interceptor — attach token
+// Attach JWT token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -16,7 +16,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor — refresh token if 401
+// Handle expired tokens with refresh
 api.interceptors.response.use(
   res => res,
   async (err) => {
@@ -25,21 +25,14 @@ api.interceptors.response.use(
     if (err.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       const refreshToken = localStorage.getItem('refreshToken');
-
-      if (!refreshToken) {
-        return Promise.reject(err);
-      }
+      if (!refreshToken) return Promise.reject(err);
 
       try {
-        const res = await axios.post('http://localhost:5000/api/auth/refresh', {
-          refreshToken,
-        });
-
+        const res = await axios.post('/api/auth/refresh', { refreshToken }); // ✅ no full URL
         const newToken = res.data.token;
         localStorage.setItem('token', newToken);
-
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        return api(originalRequest); // Retry original request
+        return api(originalRequest);
       } catch (refreshError) {
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');

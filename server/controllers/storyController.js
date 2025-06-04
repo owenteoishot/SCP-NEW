@@ -10,7 +10,6 @@ const getAllBooks = async (req, res) => {
   }
 };
 
-// Unlock a book if password matches
 const unlockBook = async (req, res) => {
   const userId = req.user.userId;
   const { bookId, password } = req.body;
@@ -34,7 +33,6 @@ const unlockBook = async (req, res) => {
   }
 };
 
-// Get chapters of a book if unlocked
 const getChapters = async (req, res) => {
   const userId = req.user.userId;
   const { bookId } = req.params;
