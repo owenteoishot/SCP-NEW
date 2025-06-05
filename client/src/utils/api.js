@@ -1,48 +1,38 @@
-import axios from 'axios';
+const API_BASE = 'http://localhost:3000/api';
 
-const api = axios.create({
-  baseURL: '/api', // ✅ Relative path for Vite proxy
-});
+export const loginUser = async (email, password) => {
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  return res.json();
+};
 
-// Attach JWT token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+export const registerUser = async (username, email, password) => {
+  const res = await fetch(`${API_BASE}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, email, password }),
+  });
+  return res.json();
+};
 
-// Handle expired tokens with refresh
-api.interceptors.response.use(
-  res => res,
-  async (err) => {
-    const originalRequest = err.config;
+export const fetchProfile = async (token) => {
+  const res = await fetch(`${API_BASE}/profile`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.json();
+};
 
-    if (err.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) return Promise.reject(err);
-
-      try {
-        const res = await axios.post('/api/auth/refresh', { refreshToken }); // ✅ no full URL
-        const newToken = res.data.token;
-        localStorage.setItem('token', newToken);
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        return api(originalRequest);
-      } catch (refreshError) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        window.location.href = '/';
-        return Promise.reject(refreshError);
-      }
-    }
-
-    return Promise.reject(err);
-  }
-);
-
-export default api;
+export const updateProfile = async (token, profile) => {
+  const res = await fetch(`${API_BASE}/profile/update`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(profile),
+  });
+  return res.json();
+};

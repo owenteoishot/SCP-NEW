@@ -1,37 +1,41 @@
 const express = require('express');
-const helmet = require('helmet');
 const cors = require('cors');
-const rateLimit = require('express-rate-limit');
+require('dotenv').config();
+
+const authRoutes = require('./routes/authRoutes');
+const profileRoutes = require('./routes/profileRoutes');
+const roleRoutes = require('./routes/roleRoutes');
+const postRoutes = require('./routes/postRoutes');
+const commentRoutes = require('./routes/commentRoutes');
+const flagRoutes = require('./routes/flagRoutes');
+const moderationRoutes = require('./routes/moderationRoutes');
+const reputationRoutes = require('./routes/reputationRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+
 
 const app = express();
 
-// ✅ Full CORS Setup
+// Enable CORS for React dev server
 app.use(cors({
-  origin: 'http://localhost:5173',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: 'http://localhost:5173', // React frontend port
+  credentials: true
 }));
-
-
-app.use(helmet());
 
 app.use(express.json());
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: { error: 'Too many login attempts. Try again later.' },
-});
-app.use('/api/auth/login', authLimiter);
+// Serve static files only if you still use /public
+app.use(express.static('public'));
 
-// ✅ Routes
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/hunt', require('./routes/huntRoutes'));
-app.use('/api/story', require('./routes/storyRoutes'));
+// Mount API routes
+app.use('/api/auth', authRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/roles', roleRoutes);
+app.use('/api/posts', postRoutes);
+app.use('/api/comments', commentRoutes);
+app.use('/api/flags', flagRoutes);
+app.use('/api/moderation', moderationRoutes);
+app.use('/api/reputation', reputationRoutes);
+app.use('/api/admin', adminRoutes);
 
-// 404 fallback
-app.use((req, res) => {
-  res.status(404).json({ error: 'Not found' });
-});
 
 module.exports = app;
