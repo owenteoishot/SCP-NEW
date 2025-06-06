@@ -23,6 +23,7 @@ function DashboardPage() {
       <p>Reputation: {profile.score || 0}</p>
     </div>
   );
+  
 }
 
 export default DashboardPage;

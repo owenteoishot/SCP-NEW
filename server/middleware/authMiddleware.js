@@ -1,18 +1,19 @@
 const jwt = require('jsonwebtoken');
 
-exports.authenticate = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
+exports.authenticate = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1];
   if (!token) return res.sendStatus(401);
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const session = await db.query('SELECT is_active FROM sessions WHERE token = $1', [token]);
+    if (!session.rows[0]?.is_active) return res.sendStatus(403);
+    req.user = decoded;
     next();
-  });
+  } catch (err) {
+    res.sendStatus(403);
+  }
 };
-
-
 exports.authorize = (roles) => {
   return (req, res, next) => {
     const userRole = req.user.role;
@@ -22,11 +23,9 @@ exports.authorize = (roles) => {
     next();
   };
 };
-
-// Add this to authMiddleware.js
 exports.requireAdmin = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
+  if (req.user.role === 'admin') {
     return next();
   }
-  return res.sendStatus(403);
+  res.sendStatus(403);
 };
