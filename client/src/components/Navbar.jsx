@@ -12,7 +12,7 @@ function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-header">
-        <Link to="/dashboard" className="logo">RedditCopy</Link>
+        <Link to="/dashboard" className="logo">SOC APP</Link>
       </div>
 
       <div className={`navbar-links ${menuOpen ? 'open' : ''}`}>

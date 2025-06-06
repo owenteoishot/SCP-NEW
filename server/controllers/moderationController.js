@@ -1,20 +1,18 @@
 const moderationModel = require('../models/moderationModel');
 const db = require('../models/db');
 
-// 🔄 Existing: Log a manual moderation action
 exports.logModeration = async (req, res) => {
-  const modId = req.user.user_id;
-  const { targetUser, actionType, reason } = req.body;
   try {
+    const modId = req.user.userId;
+    const { targetUser, actionType, reason } = req.body;
     const logged = await moderationModel.logAction(targetUser, modId, actionType, reason);
     res.status(201).json({ message: 'Moderation action logged', data: logged });
   } catch (err) {
-    console.error(err);
+    console.error('Failed to log moderation action:', err);
     res.status(500).json({ message: 'Failed to log action' });
   }
 };
 
-// 🆕 New: Get all pending content flags
 exports.getFlaggedContent = async (req, res) => {
   try {
     const result = await db.query(
@@ -22,26 +20,23 @@ exports.getFlaggedContent = async (req, res) => {
     );
     res.json(result.rows);
   } catch (err) {
-    console.error('Error fetching flags:', err);
+    console.error('Error fetching pending flags:', err);
     res.status(500).json({ message: 'Failed to fetch flagged content' });
   }
 };
 
-// 🆕 New: Resolve a content flag (action or dismiss)
 exports.resolveFlag = async (req, res) => {
-  const moderatorId = req.user.user_id;
-  const { flagId, action } = req.body;
-
-  if (!['dismissed', 'actioned'].includes(action)) {
-    return res.status(400).json({ message: 'Invalid action' });
-  }
-
   try {
+    const moderatorId = req.user.userId;
+    const { flagId, action } = req.body; // action = 'dismissed' or 'actioned'
+
+    if (!['dismissed', 'actioned'].includes(action)) {
+      return res.status(400).json({ message: 'Invalid action' });
+    }
+
     await db.query(
       `UPDATE content_flags
-       SET status = $1,
-           resolved_by = $2,
-           resolved_at = NOW()
+       SET status = $1, resolved_by = $2, resolved_at = NOW()
        WHERE flag_id = $3`,
       [action, moderatorId, flagId]
     );
@@ -49,7 +44,7 @@ exports.resolveFlag = async (req, res) => {
     res.json({ message: `Flag ${action}` });
   } catch (err) {
     console.error('Error resolving flag:', err);
-    res.status(500).json({ message: 'Failed to update flag status' });
+    res.status(500).json({ message: 'Failed to resolve flag' });
   }
 };
 
@@ -70,10 +65,9 @@ exports.getPostFlags = async (req, res) => {
       WHERE f.content_type = 'post'
       ORDER BY f.created_at DESC
     `);
-
     res.json(result.rows);
   } catch (err) {
-    console.error('Fetch flags failed:', err);
-    res.status(500).json({ message: 'Could not fetch flags' });
+    console.error('Error fetching post flags:', err);
+    res.status(500).json({ message: 'Failed to fetch post flags' });
   }
 };
