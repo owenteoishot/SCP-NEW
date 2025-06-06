@@ -19,6 +19,7 @@ function Navbar() {
         <Link to="/dashboard">Dashboard</Link>
         <Link to="/profile">Profile</Link>
         <Link to="/forum">Forum</Link>
+        <Link to="/stories">Stories</Link> {/* <-- Add this line */}
 
         {isAdmin() && (
           <>

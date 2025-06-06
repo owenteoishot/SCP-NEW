@@ -7,6 +7,8 @@ import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import ForumPage from './pages/ForumPage';
 import PostCreatePage from './pages/PostCreatePage';
+import StoryListPage from './pages/StoryListPage';
+import StoryReadPage from './pages/StoryReadPage';
 
 import AdminPage from './pages/admin/AdminPage';
 import ModerationPage from './pages/admin/ModerationPage';
@@ -34,6 +36,8 @@ function App() {
           <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path="/forum" element={<ProtectedRoute><ForumPage /></ProtectedRoute>} />
           <Route path="/forum/create" element={<ProtectedRoute><PostCreatePage /></ProtectedRoute>} />
+          <Route path="/stories" element={<ProtectedRoute><StoryListPage /></ProtectedRoute>} />
+          <Route path="/stories/:id" element={<ProtectedRoute><StoryReadPage /></ProtectedRoute>} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />

@@ -217,3 +217,12 @@ a:hover {
     grid-template-columns: 1fr;
   }
 }
+
+.navbar-nav .nav-link {
+  margin-right: 24px; /* Adds space between nav items */
+  letter-spacing: 1px; /* Increases space between characters */
+  word-spacing: 4px;   /* Increases space between words */
+}
+.navbar-nav .nav-link:last-child {
+  margin-right: 0; /* Removes margin on the last item */
+}
